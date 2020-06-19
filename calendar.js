@@ -148,6 +148,8 @@ function generate_month_calendar(year, month) {
                 count++;
             }
         }
+        insertData += '<button style="display:block;margin: 0 auto;">午前予約</button>'
+        insertData += '<button style="display:block;margin: 0 auto;">午後予約</button>'
         insertData += '</td>';
         if(calendarData[i]['weekday'] >= 6) {
             insertData += '</tr>';
