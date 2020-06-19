@@ -60,6 +60,7 @@ function generate_calendar_header(wrapper, year, month) {
     // 前月ボタンをクリックした時のイベント設定
     cPrev.addEventListener('click', function() {
         add_calendar(wrapper, prevMonth.getFullYear(), (prevMonth.getMonth() + 1));
+        get_weather_info();
     }, false);
     cHeader.appendChild(cPrev);
  
@@ -71,6 +72,7 @@ function generate_calendar_header(wrapper, year, month) {
     // 翌月ボタンをクリックした時のイベント設定
     cNext.addEventListener('click', function() {
         add_calendar(wrapper, nextMonth.getFullYear(), (nextMonth.getMonth() + 1));
+        get_weather_info();
     }, false);
     cHeader.appendChild(cNext);
  
@@ -86,6 +88,12 @@ function generate_month_calendar(year, month) {
     var weekdayData = ['日', '月', '火', '水', '木', '金', '土'];
     // カレンダーの情報を取得
     var calendarData = get_month_calendar(year, month);
+
+    var day = new Date()
+    var today = day.getDate()
+    var thismonth = day.getMonth()
+    console.log(today)
+    var thisweek = [today,today+1,today+2,today+3,today+4]
  
     var i = calendarData[0]['weekday']; // 初日の曜日を取得
     // カレンダー上の初日より前を埋める
@@ -121,16 +129,25 @@ function generate_month_calendar(year, month) {
     }
     insertData += '</tr>';
     insertData += '</thead>';
- 
+
     // 日付部分の生成
     insertData += '<tbody>';
     for (var i = 0; i < calendarData.length; i++) {
         if(calendarData[i]['weekday'] <= 0) {
             insertData += '<tr>';
         }
-        insertData += '<td>';
+        insertData += '<td id=day-'+ calendarData[i]['day']+'>';
         insertData += calendarData[i]['day'];
-        insertData += '<p></p>'
+        var count =0;
+        for (var j = 0;j < thisweek.length;j++){
+            if(calendarData[i]['day'] == thisweek[j] && thismonth == month-1){
+                insertData += '<div style="height: 30px;width: 120px;">気温　<span id = "temp-'+calendarData[i]['day']+'"  class="bold"></span>　℃</div>'
+                insertData += '<div style="height: 30px;width: 120px;">湿度　<span id = "humidity-'+calendarData[i]['day']+'" class="bold"></span>　%</div>'
+                insertData += '<div><span id = "weather-'+calendarData[i]['day']+'" class="bold"></span></div>'
+                insertData += '<div id="weatherMark-'+calendarData[i]['day']+'"></div>'
+                count++;
+            }
+        }
         insertData += '</td>';
         if(calendarData[i]['weekday'] >= 6) {
             insertData += '</tr>';
@@ -168,3 +185,54 @@ function get_month_calendar(year, month) {
     }
     return calendarData;
 }
+
+function get_weather_info(){
+    var day = new Date()
+    var today = day.getDate()
+    var week = [today,today+1,today+2,today+3,today+4];
+    $.each(week,function(index,val){
+        $.post("http://api.openweathermap.org/data/2.5/forecast?id=1850147&appid=cc05750ba50400f27ebabbcd6f4c4976&lang=ja&units=metric",  
+                function(json){
+                    weather = "#weather-"+val
+                    temp = "#temp-"+val
+                    humidity = "#humidity-"+val
+                    weatherMark = "#weatherMark-"+val
+                    
+                    //TODO: 日にちごとにidがあるからそれに変える
+                    $(weather).html(json.list[8*index].weather[0].description);
+                    $(humidity).html(json.list[8*index].main.humidity);
+                    //lang=jaにすることで華氏から摂氏に変換することなく摂氏表示となる。小数点だけ丸める処理をする
+                    $(temp).html(Math.round(json.list[8*index].main.temp));
+
+                    //天気に応じた天気アイコンを表示させる
+                    switch (json.list[8*index].weather[0].main){
+                    case 'Clouds':
+                    $(weatherMark).html("<img src='http://openweathermap.org/img/w/04d.png' >");
+                    break;
+                    case 'Snow':
+                    $(weatherMark).html("<img src='http://openweathermap.org/img/w/13d.png' >");
+                    break;
+                    case 'Rain':
+                    $(weatherMark).html("<img src='http://openweathermap.org/img/w/09d.png' >");
+                    break;
+                    case 'Clear':
+                    $(weatherMark).html("<img src='http://openweathermap.org/img/w/01d.png' >");
+                    break;
+                    case 'Fog':
+                    $(weatherMark).html("<img src='http://openweathermap.org/img/w/50d.png' >");
+                    break;
+                    case 'Mist':
+                    $(weatherMark).html("<img src='http://openweathermap.org/img/w/50n.png' >");
+                    break;
+                    case 'Haze':
+                    $(weatherMark).html("<img src='http://openweathermap.org/img/w/50d.png' >");
+                    break;
+                    default:
+                    $(weatherMark).html("<img src='http://openweathermap.org/img/w/01n.png' >");
+                }
+            }
+        );
+    });
+}
+
+

@@ -3,7 +3,64 @@
     <meta http-equiv="content-type" charset="utf-8">
     <link rel="stylesheet" type="text/css" href="style.css">
     <script type="text/javascript" src="calendar.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script> 
+    <script src='https://use.fontawesome.com/releases/v5.0.13/js/all.js'></script>
 </head>
 <body>
     <div id="calendar"></div>
 </body>
+
+<script>
+    $(document).ready(function() {
+            //JSONデータ取得 日本語で天気名を表示したいのでlang=ja　として日本語表記データを取得
+            var day = new Date()
+            var today = day.getDate()
+            var week = [today,today+1,today+2,today+3,today+4];
+            $.each(week,function(index,val){
+                $.post("http://api.openweathermap.org/data/2.5/forecast?id=1850147&appid=cc05750ba50400f27ebabbcd6f4c4976&lang=ja&units=metric",  
+                        function(json){
+                            weather = "#weather-"+val
+                            temp = "#temp-"+val
+                            humidity = "#humidity-"+val
+                            weatherMark = "#weatherMark-"+val
+                            
+                            //TODO: 日にちごとにidがあるからそれに変える
+                            $(weather).html(json.list[8*index].weather[0].description);
+                            $(humidity).html(json.list[8*index].main.humidity);
+                            //lang=jaにすることで華氏から摂氏に変換することなく摂氏表示となる。小数点だけ丸める処理をする
+                            $(temp).html(Math.round(json.list[8*index].main.temp));
+
+                            //天気に応じた天気アイコンを表示させる
+                            switch (json.list[8*index].weather[0].main){
+                            case 'Clouds':
+                            $(weatherMark).html("<img src='http://openweathermap.org/img/w/04d.png' >");
+                            break;
+                            case 'Snow':
+                            $(weatherMark).html("<img src='http://openweathermap.org/img/w/13d.png' >");
+                            break;
+                            case 'Rain':
+                            $(weatherMark).html("<img src='http://openweathermap.org/img/w/09d.png' >");
+                            break;
+                            case 'Clear':
+                            $(weatherMark).html("<img src='http://openweathermap.org/img/w/01d.png' >");
+                            break;
+                            case 'Fog':
+                            $(weatherMark).html("<img src='http://openweathermap.org/img/w/50d.png' >");
+                            break;
+                            case 'Mist':
+                            $(weatherMark).html("<img src='http://openweathermap.org/img/w/50n.png' >");
+                            break;
+                            case 'Haze':
+                            $(weatherMark).html("<img src='http://openweathermap.org/img/w/50d.png' >");
+                            break;
+                            default:
+                            $(weatherMark).html("<img src='http://openweathermap.org/img/w/01n.png' >");
+                        }
+                    }
+                );
+            });
+            
+});
+
+</script>
